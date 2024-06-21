@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of Files</title>
+</head>
+<body>
+<h1>List of Files</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Filename</th>
+        <!-- Other table headers -->
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Iterate over files and display them -->
+    <tr th:each="file : ${files}">
+        <td th:text="${file.id}">1</td>
+        <td th:text="${file.name}">filename</td>
+        <!-- Other table cells -->
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

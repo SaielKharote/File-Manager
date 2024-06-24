@@ -1,5 +1,7 @@
 package org.vcriate.filemanager.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,18 +11,20 @@ import org.vcriate.filemanager.repositories.FileRepository;
 import org.vcriate.filemanager.repositories.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 public class FileService {
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
     @Autowired
     private FileRepository fileRepository;
 
     @Autowired
     private UserRepository userRepository;
 
-    public List<File> getAllFiles() {
-        return fileRepository.findAll();
+    public List<File> getAllFiles(User user) {
+        return fileRepository.findByUserId(user.getId());
     }
 
     public File getFileById(Long id) {
@@ -28,6 +32,7 @@ public class FileService {
     }
 
     public File uploadFile(MultipartFile file, Long userId) {
+        log.atInfo().log("Uploading file for user with ID: {}", userId);
         User user = userRepository.findById(userId).orElse(null);
         if (user != null) {
             String filename = saveFile(file);
@@ -36,7 +41,10 @@ public class FileService {
             newFile.setDateUploaded(LocalDateTime.now());
             newFile.setVersion(1);
             newFile.setUser(user);
+            log.atInfo().log("Saving file: {}", newFile);
             return fileRepository.save(newFile);
+        } else {
+            log.atError().log("User not found with ID: {}", userId);
         }
         return null;
     }

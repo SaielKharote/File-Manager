@@ -20,7 +20,6 @@ import org.vcriate.filemanager.requests.LoginRequest;
 import org.vcriate.filemanager.requests.SignupRequest;
 import org.vcriate.filemanager.responses.JwtResponse;
 import org.vcriate.filemanager.services.CustomUserDetailsService;
-import org.vcriate.filemanager.services.UserService;
 
 @RestController
 @RequestMapping("/fm/auth")
@@ -41,13 +40,16 @@ public class AuthController {
         if (userRepository.findByEmail(req.getEmail()) != null) {
             throw new UserException("User with email " + req.getEmail() + " already exists");
         }
-        User user = new User();
-        user.setEmail(req.getEmail());
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
-        User savedUser = userRepository.save(user);
-
         String email = req.getEmail();
         String password = req.getPassword();
+        String username = req.getUsername();
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setUsername(username);
+        User savedUser = userRepository.save(user);
+
         Authentication authentication = authenticate(email, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtGenerator.generateJwtToken(authentication);
@@ -56,19 +58,16 @@ public class AuthController {
         jwtResponse.setAuthenticated(true);
         jwtResponse.setError(false);
         jwtResponse.setErrorDetails(null);
-        jwtResponse.setMessage(user.getUsername() + " signed up in successfully");
+        jwtResponse.setMessage(username + " signed up successfully");
 
         return new ResponseEntity<>(jwtResponse, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> loginUser(@RequestBody LoginRequest req) throws UserException {
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(req.getEmail());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(req.getEmail());
         if (userDetails == null) {
-            throw new UserException("User with email " + req.getEmail() + " not found");
-        }
-        if (!passwordEncoder.matches(req.getPassword(), userDetails.getPassword())) {
-            throw new UserException("Invalid password");
+            throw new UserException("User with email " + req.getEmail() + " not found!!");
         }
 
         String email = req.getEmail();
@@ -81,7 +80,7 @@ public class AuthController {
         jwtResponse.setAuthenticated(true);
         jwtResponse.setError(false);
         jwtResponse.setErrorDetails(null);
-        jwtResponse.setMessage(userDetails.getUsername() + " logged in successfully");
+        jwtResponse.setMessage("Logged in successfully!!");
 
         return new ResponseEntity<>(jwtResponse, HttpStatus.ACCEPTED);
     }

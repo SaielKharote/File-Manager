@@ -11,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -24,18 +25,20 @@ public class AppConfig {
     @Bean
     public SecurityFilterChain securityConfiguration(HttpSecurity http) throws Exception {
         http.httpBasic(Customizer.withDefaults());
-
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(c -> c.disable());
 
         http.authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.POST, "/fm/auth/**").permitAll())
-                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/").permitAll())
-                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/swagger-ul/**", "/").permitAll())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/").permitAll())
                 .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET,"/ws/**").permitAll())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/fm/files").authenticated())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/fm/files/download/**").authenticated())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.POST, "/fm/files/upload").authenticated())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.POST, "/fm/files/share/**").authenticated())
+                .authorizeHttpRequests(c -> c.requestMatchers(HttpMethod.GET, "/fm/files/list").authenticated())
                 .authorizeHttpRequests(c -> c.anyRequest().permitAll());
 
-        http.addFilterBefore(new JwtTokenValidationFilter(), BasicAuthenticationFilter.class);
-
-        http.csrf(c -> c.disable());
+        http.addFilterBefore(new JwtTokenValidationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         http.cors(c -> c.configurationSource(request -> {
             CorsConfiguration cfg = new CorsConfiguration();
